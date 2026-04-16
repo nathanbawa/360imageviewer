@@ -54,6 +54,110 @@
         #vrBtn:hover  { background: rgba(255,255,255,0.18); }
         #vrBtn:active { background: rgba(255,255,255,0.35); }
 
+        /* Gyro toggle button */
+        #gyroBtn {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            z-index: 300;
+            width: 50px;
+            height: 50px;
+            background: rgba(0,0,0,0.7);
+            color: #fff;
+            border: 2px solid rgba(255,255,255,0.35);
+            border-radius: 50%;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            flex-direction: column;
+        }
+        #gyroBtn:hover { background: rgba(255,255,255,0.18); border-color: rgba(255,255,255,0.5); }
+        #gyroBtn:active { background: rgba(255,255,255,0.35); transform: scale(0.92); }
+        #gyroBtn.active { background: rgba(76, 175, 80, 0.7); border-color: rgba(76, 175, 80, 1); }
+
+        #gyroLabel {
+            position: fixed;
+            top: 70px;
+            right: 16px;
+            z-index: 300;
+            font-size: 10px;
+            color: #fff;
+            pointer-events: none;
+            text-align: center;
+            width: 50px;
+        }
+
+        /* Bottom image selector */
+        #imageSelector {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 12px;
+            z-index: 300;
+            justify-content: center;
+            flex-wrap: wrap;
+            max-width: 90vw;
+        }
+
+        .image-box {
+            width: 70px;
+            height: 70px;
+            background: rgba(0,0,0,0.6);
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            font-size: 11px;
+            color: #fff;
+            text-align: center;
+            transition: all 0.2s;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            padding: 4px;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .image-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(to bottom, transparent 20%, rgba(0,0,0,0.9) 100%);
+            pointer-events: none;
+        }
+
+        .image-box-label {
+            position: relative;
+            z-index: 10;
+            background: rgba(0,0,0,0.6);
+            padding: 4px 8px;
+            border-radius: 4px;
+            white-space: nowrap;
+            font-size: 10px;
+            text-align: center;
+        }
+
+        .image-box:hover { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.5); }
+        .image-box.active { border-color: #4CAF50; background: rgba(76, 175, 80, 0.3); }
+        .image-box:active { transform: scale(0.95); }
+
         #counter {
             position: fixed;
             top: 16px;
@@ -89,41 +193,111 @@
         }
         #toast.show { opacity: 1; }
 
-        /* Red banner shown when NOT on HTTPS — VR requires HTTPS */
-        #https-warning {
-            display: none;
+        /* 360 Logo Splash Screen */
+        #splash {
             position: fixed;
-            top: 0; left: 0; right: 0;
-            background: #c0392b;
-            color: #fff;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            opacity: 1;
+            transition: opacity 0.6s ease-out;
+            pointer-events: none;
+        }
+
+        #splash.fade-out {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .splash-content {
             text-align: center;
-            padding: 10px 16px;
-            font-size: 13px;
-            z-index: 400;
-            line-height: 1.5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            background: rgba(0,0,0,0.8);
+            padding: 20px;
+            border-radius: 12px;
+            backdrop-filter: blur(8px);
+        }
+
+        .splash-logo {
+            width: 100px;
+            height: 100px;
+            animation: zoom-in 1s ease-out;
+            object-fit: contain;
+        }
+
+        .splash-text {
+            font-size: 14px;
+            font-weight: bold;
+            color: #4CAF50;
+            letter-spacing: 1px;
+            text-shadow: 0 0 15px rgba(76, 175, 80, 0.5);
+        }
+
+        @keyframes zoom-in {
+            0% {
+                transform: scale(0.3);
+                opacity: 0;
+            }
+            60% {
+                opacity: 1;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
         }
 
         @media (max-width: 480px) {
+            .splash-logo {
+                width: 80px;
+                height: 80px;
+                object-fit: contain;
+            }
+            .splash-text {
+                font-size: 12px;
+            }
             .nav-btn { width: 46px; height: 46px; font-size: 20px; }
             #leftBtn  { left: 8px; }
             #rightBtn { right: 8px; }
+            #gyroBtn { width: 44px; height: 44px; font-size: 20px; }
+            #gyroLabel { top: 60px; font-size: 9px; }
         }
     </style>
 </head>
 <body>
 
-<div id="https-warning">
-    ⚠️ <strong>VR split-screen needs HTTPS.</strong>
-    Host this on Netlify, GitHub Pages, or VS Code Live Server (localhost) to enable Cardboard VR.
-    360° drag viewing works fine right now.
+<div id="splash">
+    <div class="splash-content">
+        <img src="360logo.png" alt="360 Logo" class="splash-logo">
+        <div class="splash-text">360° AR MODE</div>
+    </div>
 </div>
 
 <div id="counter"><span id="imgNum">1</span> / 2</div>
 
+<button id="gyroBtn" title="Toggle gyroscope (mobile)">⟳</button>
+<div id="gyroLabel">Gyro: OFF</div>
+
 <button id="leftBtn"  class="nav-btn">❮</button>
 <button id="rightBtn" class="nav-btn">❯</button>
 
-<button id="vrBtn">🥽 Enter VR — Cardboard / Headset</button>
+<div id="imageSelector">
+    <div class="image-box" data-index="1" style="background-image: url('housev3converter.jpg');" title="Living room">
+        <div class="image-box-label">Living room</div>
+    </div>
+    <div class="image-box" data-index="0" style="background-image: url('360photoconverter.jpg');" title="Swimming pool">
+        <div class="image-box-label">Swimming pool</div>
+    </div>
+</div>
 
 <div id="toast"></div>
 
@@ -173,8 +347,20 @@ function goTo(i) {
     imgNum.textContent = current + 1;
 }
 
-document.getElementById('leftBtn') .addEventListener('click', () => goTo(current - 1));
-document.getElementById('rightBtn').addEventListener('click', () => goTo(current + 1));
+// Update active box based on current index
+function updateActiveBox() {
+    imageBoxes.forEach(b => b.classList.remove('active'));
+    document.querySelector(`.image-box[data-index="${current}"]`).classList.add('active');
+}
+
+document.getElementById('leftBtn') .addEventListener('click', () => {
+    goTo(current - 1);
+    updateActiveBox();
+});
+document.getElementById('rightBtn').addEventListener('click', () => {
+    goTo(current + 1);
+    updateActiveBox();
+});
 document.addEventListener('keydown', e => {
     if (e.key === 'ArrowLeft')  goTo(current - 1);
     if (e.key === 'ArrowRight') goTo(current + 1);
@@ -185,27 +371,50 @@ document.addEventListener('keydown', e => {
 //   Works on: Meta Quest browser, Chrome on Android + Cardboard,
 //             any WebXR-compatible browser served over HTTPS.
 const scene = document.getElementById('scene');
-const vrBtn = document.getElementById('vrBtn');
+const cam = document.getElementById('cam');
+const gyroBtn = document.getElementById('gyroBtn');
 
-vrBtn.addEventListener('click', () => {
-    if (!scene.is('vr-mode')) {
-        scene.enterVR();
+let gyroEnabled = false;
+const isMobile = /Android|webOS|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+// ── Gyro toggle button ─────────────────────────────────────────────────────
+gyroBtn.addEventListener('click', () => {
+    gyroEnabled = !gyroEnabled;
+    cam.setAttribute('look-controls', `touchEnabled: true; magicWindowTrackingEnabled: ${gyroEnabled}; pointerLockEnabled: false`);
+    
+    const gyroLabel = document.getElementById('gyroLabel');
+    if (gyroEnabled) {
+        gyroBtn.classList.add('active');
+        gyroLabel.textContent = 'Gyro: ON';
+        showToast('Gyroscope enabled - tilt your device to look around');
     } else {
-        scene.exitVR();
+        gyroBtn.classList.remove('active');
+        gyroLabel.textContent = 'Gyro: OFF';
+        showToast('Gyroscope disabled');
     }
 });
 
-scene.addEventListener('enter-vr', () => { vrBtn.textContent = '✕ Exit VR'; });
-scene.addEventListener('exit-vr',  () => { vrBtn.textContent = '🥽 Enter VR — Cardboard / Headset'; });
-
-// ── Show warning if not HTTPS (VR blocked by browser security) ─────────────
-if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
-    document.getElementById('https-warning').style.display = 'block';
+// Hide gyro button on desktop
+if (!isMobile) {
+    gyroBtn.style.display = 'none';
 }
 
-// ── Mobile first-load hint ─────────────────────────────────────────────────
-const isMobile = /Android|webOS|iPhone|iPad|iPod/i.test(navigator.userAgent);
+// ── Image selector boxes ───────────────────────────────────────────────────
+const imageBoxes = document.querySelectorAll('.image-box');
+imageBoxes.forEach(box => {
+    box.addEventListener('click', () => {
+        const index = parseInt(box.getAttribute('data-index'));
+        goTo(index);
+        updateActiveBox();
+    });
+});
+
+// Set initial active state
+updateActiveBox();
+
+// ── Show 360 AR prompt on launch ────────────────────────────────────────────
 const toast = document.getElementById('toast');
+const splash = document.getElementById('splash');
 
 function showToast(msg, ms = 4500) {
     toast.textContent = msg;
@@ -213,9 +422,19 @@ function showToast(msg, ms = 4500) {
     setTimeout(() => toast.classList.remove('show'), ms);
 }
 
+// Hide splash screen after 3 seconds
+setTimeout(() => {
+    splash.classList.add('fade-out');
+}, 3000);
+
+// ── Show 360 AR prompt on launch ────────────────────────────────────────────
 if (isMobile) {
     scene.addEventListener('loaded', () => {
-        setTimeout(() => showToast('Drag anywhere to look around  •  Tap arrows to switch images'), 900);
+        setTimeout(() => showToast('📸 360° AR mode ready - Drag to look around • Tap arrows to switch images'), 1200);
+    });
+} else {
+    scene.addEventListener('loaded', () => {
+        setTimeout(() => showToast('🖱️ Use mouse to look around • Arrow keys or buttons to switch images'), 1200);
     });
 }
 </script>
