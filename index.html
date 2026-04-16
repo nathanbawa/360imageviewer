@@ -202,26 +202,15 @@
 
 <div id="toast"></div>
 
-<!--
-    KEY FIX:
-    look-controls has touchEnabled: FALSE on mobile.
-    We replace A-Frame's touch handling with our own custom
-    touch listener below that drives yaw/pitch directly —
-    same math as desktop mouse, full 360° vertically and horizontally.
-    On desktop, A-Frame's mouse look-controls remain active as normal.
--->
 <a-scene
-    id="scene"
-    vr-mode-ui="enabled: true"
-    device-orientation-permission-ui="enabled: false"
-    renderer="antialias: true; colorManagement: true">
+    renderer="antialias: true"
+    device-orientation-permission-ui="enabled: true">
 
     <a-entity
         id="cam"
         camera
-        look-controls="touchEnabled: false; magicWindowTrackingEnabled: false; pointerLockEnabled: false"
-        wasd-controls="enabled: false"
-        position="0 1.6 0">
+        look-controls="touchEnabled: true; magicWindowTrackingEnabled: false"
+        wasd-controls="enabled: false">
     </a-entity>
 
     <a-sky id="sky" src="360photoconverter.jpg" rotation="0 -90 0"></a-sky>
@@ -231,9 +220,8 @@
 <script>
 // ── Helpers ────────────────────────────────────────────────────────────────
 const isMobile = /Android|webOS|iPhone|iPad|iPod/i.test(navigator.userAgent);
-const isIOS    = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
-const toast    = document.getElementById('toast');
+const toast = document.getElementById('toast');
 function showToast(msg, ms = 4000) {
     toast.textContent = msg;
     toast.classList.add('show');
@@ -243,7 +231,7 @@ function showToast(msg, ms = 4000) {
 // ── Images ─────────────────────────────────────────────────────────────────
 const IMAGES = ['360photoconverter.jpg', 'housev3converter.jpg'];
 let current = 0;
-const sky    = document.getElementById('sky');
+const sky = document.getElementById('sky');
 const imgNum = document.getElementById('imgNum');
 
 function goTo(i) {
@@ -258,144 +246,66 @@ const imageBoxes = document.querySelectorAll('.image-box');
 imageBoxes.forEach(box => {
     box.addEventListener('click', () => goTo(parseInt(box.dataset.index)));
 });
+
 function updateActiveBox() {
     imageBoxes.forEach(b => b.classList.toggle('active', parseInt(b.dataset.index) === current));
 }
 updateActiveBox();
 
 // Arrow buttons + keyboard
-document.getElementById('leftBtn') .addEventListener('click', () => goTo(current - 1));
+document.getElementById('leftBtn').addEventListener('click', () => goTo(current - 1));
 document.getElementById('rightBtn').addEventListener('click', () => goTo(current + 1));
 document.addEventListener('keydown', e => {
-    if (e.key === 'ArrowLeft')  goTo(current - 1);
+    if (e.key === 'ArrowLeft') goTo(current - 1);
     if (e.key === 'ArrowRight') goTo(current + 1);
 });
 
-// ── Camera rotation state ──────────────────────────────────────────────────
-// We manage yaw (left/right) and pitch (up/down) ourselves.
-// Range: yaw = unlimited, pitch = -85° to +85° (prevents flipping).
-let yaw   = -90;   // start facing forward (matches rotation="0 -90 0" on sky)
-let pitch = 0;
-
-function applyRotation() {
-    const cam = document.getElementById('cam');
-    // A-Frame uses Y for horizontal (yaw) and X for vertical (pitch)
-    cam.setAttribute('rotation', { x: pitch, y: yaw, z: 0 });
-}
-
-// ── CUSTOM TOUCH LOOK — full 360° identical to desktop ────────────────────
-// A-Frame's built-in touchEnabled clamps and feels sluggish on mobile.
-// We disable it (touchEnabled: false above) and implement our own:
-//   • Single finger drag = look around (yaw + pitch, no limits on yaw)
-//   • Sensitivity matches desktop mouse feel
-
-const TOUCH_SENSITIVITY = 0.25; // degrees per pixel — tweak if needed
-let touchStartX = null;
-let touchStartY = null;
-let isTouchingUI = false;
-
-// Check if a touch target is a UI button (arrows, thumbnails, gyro)
-function isUIElement(el) {
-    return el.closest('.nav-btn, .image-box, #gyroBtn, #gyroLabel, #counter, #toast, #splash');
-}
-
-document.addEventListener('touchstart', e => {
-    if (isUIElement(e.target)) { isTouchingUI = true; return; }
-    isTouchingUI = false;
-    if (e.touches.length === 1) {
-        touchStartX = e.touches[0].clientX;
-        touchStartY = e.touches[0].clientY;
-    }
-}, { passive: true });
-
-document.addEventListener('touchmove', e => {
-    if (isTouchingUI || touchStartX === null || e.touches.length !== 1) return;
-
-    const dx = e.touches[0].clientX - touchStartX;
-    const dy = e.touches[0].clientY - touchStartY;
-
-    yaw   -= dx * TOUCH_SENSITIVITY;          // left/right — full 360°, no clamp
-    pitch += dy * TOUCH_SENSITIVITY;          // up/down
-    pitch  = Math.max(-85, Math.min(85, pitch)); // prevent camera flip
-
-    applyRotation();
-
-    touchStartX = e.touches[0].clientX;
-    touchStartY = e.touches[0].clientY;
-}, { passive: true });
-
-document.addEventListener('touchend', () => {
-    touchStartX = null;
-    touchStartY = null;
-    isTouchingUI = false;
-});
-
-// ── Gyro (device orientation) — optional, toggled by button ───────────────
-let gyroEnabled = false;
-let gyroAlpha0  = null; // calibration baseline
-
-function onDeviceOrientation(e) {
-    if (!gyroEnabled) return;
-    // e.alpha = compass heading (0–360), e.beta = tilt front/back, e.gamma = tilt left/right
-
-    // Calibrate on first reading so view doesn't jump
-    if (gyroAlpha0 === null) gyroAlpha0 = e.alpha;
-
-    const alpha = e.alpha ?? 0;
-    const beta  = e.beta  ?? 0;
-
-    yaw   = -90 - (alpha - gyroAlpha0);
-    pitch = Math.max(-85, Math.min(85, beta - 90)); // beta 90 = phone upright
-    applyRotation();
-}
-
-window.addEventListener('deviceorientation', onDeviceOrientation, true);
-
-const gyroBtn   = document.getElementById('gyroBtn');
+// ── Gyro toggle (clean & simple) ───────────────────────────────────────────
+const cam = document.getElementById('cam');
+const gyroBtn = document.getElementById('gyroBtn');
 const gyroLabel = document.getElementById('gyroLabel');
+let gyroEnabled = false;
 
-async function enableGyro() {
-    if (isIOS && typeof DeviceOrientationEvent.requestPermission === 'function') {
-        const resp = await DeviceOrientationEvent.requestPermission();
-        if (resp !== 'granted') { showToast('⚠️ Motion access denied'); return; }
-    }
-    gyroEnabled = true;
-    gyroAlpha0  = null; // recalibrate
-    gyroBtn.classList.add('active');
-    gyroLabel.textContent = 'Gyro: ON';
-    showToast('Gyro ON — tilt your phone to look around');
-}
-
-gyroBtn.addEventListener('click', () => {
+async function toggleGyro() {
     if (!gyroEnabled) {
-        enableGyro();
+        // Request permission on iOS
+        if (typeof DeviceOrientationEvent !== 'undefined' &&
+            typeof DeviceOrientationEvent.requestPermission === 'function') {
+            const res = await DeviceOrientationEvent.requestPermission();
+            if (res !== 'granted') {
+                showToast('Motion access denied');
+                return;
+            }
+        }
+
+        cam.setAttribute('look-controls', 'magicWindowTrackingEnabled: true');
+        gyroBtn.classList.add('active');
+        gyroLabel.textContent = 'Gyro: ON';
+        showToast('Tilt your phone to look around');
+        gyroEnabled = true;
+
     } else {
-        gyroEnabled = false;
-        gyroAlpha0  = null;
+        cam.setAttribute('look-controls', 'magicWindowTrackingEnabled: false');
         gyroBtn.classList.remove('active');
         gyroLabel.textContent = 'Gyro: OFF';
         showToast('Gyro OFF');
+        gyroEnabled = false;
     }
-});
+}
+
+gyroBtn.addEventListener('click', toggleGyro);
 
 // Hide gyro button on desktop
 if (!isMobile) {
-    gyroBtn.style.display  = 'none';
+    gyroBtn.style.display = 'none';
     gyroLabel.style.display = 'none';
 }
-
-// ── VR (WebXR stereo split-screen) ────────────────────────────────────────
-const scene = document.getElementById('scene');
-
-// No VR button in this version — A-Frame's native VR button (bottom-right)
-// handles enterVR() for headsets when served over HTTPS.
-scene.addEventListener('enter-vr', () => {});
-scene.addEventListener('exit-vr',  () => {});
 
 // ── Splash ─────────────────────────────────────────────────────────────────
 setTimeout(() => document.getElementById('splash').classList.add('fade-out'), 3000);
 
 // ── First-load toast ───────────────────────────────────────────────────────
+const scene = document.querySelector('a-scene');
 scene.addEventListener('loaded', () => {
     setTimeout(() => {
         showToast(isMobile
@@ -403,9 +313,6 @@ scene.addEventListener('loaded', () => {
             : '🖱️ Mouse to look around • Arrow keys to switch');
     }, 1000);
 });
-
-// Apply initial rotation so camera starts facing forward
-scene.addEventListener('loaded', applyRotation);
 </script>
 </body>
 </html>
